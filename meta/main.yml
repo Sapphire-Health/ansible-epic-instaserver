@@ -1,0 +1,9 @@
+---
+  galaxy_info:
+    role_name: ansible-epic-instaserver
+    author: Lyas Spiehler
+    description: Ansible role to extract and run instaserver
+    company: Sapphire Health
+  collections: []
+  dependencies: []
+...

@@ -1,0 +1,14 @@
+---
+  - name: Install ksh shell
+    yum:
+      name: ksh
+      disable_gpg_check: true
+      state: present
+  - name: Download instaserver
+    get_url:
+      url: "{{ instaserver_url }}"
+      dest: /tmp
+      mode: '0555'
+    register: file
+  - name: Extract instaserver
+    command: sh {{ file.dest }} -extract
