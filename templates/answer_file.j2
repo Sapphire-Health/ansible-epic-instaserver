@@ -1,0 +1,14 @@
+EmailFrom={{answer_file.EmailFrom}}
+EmailTo={{answer_file.EmailTo}}
+{% for instance in answer_file.Instances %}
+Instance={{instance.Name}},Directory={{instance.Directory}},InstanceType={{instance.Type}},SuperServerPort={{instance.SuperServerPort}},WebServerPort={{instance.WebServerPort}}
+{% endfor %}
+LicenseKey={{instaserver_file_dir}}{{downloads.license_url.split('/')[-1]}}
+Organization={{answer_file.Organization}}
+{% for ors in answer_file.OtherRemoteServer %}
+"OtherRemoteServer={{ors.Hostname}},CheckSystemConfig={{ors.CheckSystemConfig}},HostType={{ors.HostType}},Port={{ors.Port}},queued={{ors.Queued}}"
+{% endfor %}
+Password={{answer_file.Password}}
+SMTPServer={{answer_file.SMTPServer}}
+SystemPulseServer={{answer_file.SystemPulseServer}}
+OwnerGroup={{answer_file.OwnerGroup}}

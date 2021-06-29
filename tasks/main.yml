@@ -1,14 +1,81 @@
 ---
-  - name: Install ksh shell
+  - name: Install multiple dependencies
     yum:
-      name: ksh
+      name:
+      - ksh
+      - gcc
+      - gdb
+      - lsof
+      - strace
+      - tmux
+      - perf
+      - pcp-system-tools
+      - bcc-tools
       disable_gpg_check: true
       state: present
-  - name: Download instaserver
+  - name: Create directories for all instances in answerfile
+    ansible.builtin.file:
+      path: "{{ item.Directory }}"
+      mode: "2755"
+      owner: "{{ epic_admin_user }}"
+      group: "{{ epic_admin_group }}"
+      state: directory
+    loop: "{{ answer_file.Instances }}"
+  - name: Create instaserver release directory
+    ansible.builtin.file:
+      path: "{{ instaserver_file_dir }}"
+      state: directory
+  - name: Download files
     get_url:
-      url: "{{ instaserver_url }}"
-      dest: /tmp
-      mode: '0555'
-    register: file
-  - name: Extract instaserver
-    command: sh {{ file.dest }} -extract
+      url: "{{ item.value }}"
+      dest: "{{ instaserver_file_dir }}"
+      #mode: '0555'
+    register: files
+    loop: "{{ downloads | dict2items }}"
+  - name: Get list of downloads
+    debug:
+      msg: "{{ files.results }}"
+  - name: Find instaserver download from array of downloads
+    include_tasks: post_download.yml
+    when: item.item.key == "instaserver_url"
+    loop: "{{ files.results }}"
+  - name: Change file ownership for all downloaded files except instaserver
+    ansible.builtin.file:
+      path: "{{ item.invocation.module_args.path }}"
+      owner: "{{ epic_admin_user }}"
+      group: "{{ epic_admin_group }}"
+    when: item.item.key != "instaserver_url"
+    loop: "{{ files.results }}"
+  - name: Template to build answer_file
+    ansible.builtin.template:
+      src: answer_file.j2
+      dest: "{{ instaserver_file_dir }}{{ answerfile_name }}"
+      owner: "{{ epic_admin_user }}"
+      group: "{{ epic_admin_group }}"
+      mode: '0644'
+  - name: Parse dir name
+    set_fact:
+      instaserver_dir: "{{ instaserver_dir.split('/')[-1] }}"
+  - name: Get name of Epic config RPM
+    find:
+      paths: "{{ instaserver_file_dir }}{{ instaserver_dir }}/other/linuxconfig"
+      patterns: 'epic-config*.rpm'
+    register: rpms
+  - name: Install epic-config rpm
+    yum:
+      name: "{{ item.path }}"
+      state: present
+      disable_gpg_check: yes
+    loop: "{{ rpms.files }}"
+  - stat:
+      path: "{{ iris_bin }}"
+    register: irisbin
+  - name: Install Iris ()
+    ansible.builtin.command:
+      cmd: sh {{ instaserver_dir }}.sh --component BuildCustom --variable_file {{ instaserver_file_dir }}{{ answerfile_name }}
+      chdir: "{{ instaserver_file_dir }}"
+    when: irisbin.stat.exists != True
+    register: irisinstall
+  - name: Return stdout from iris install
+    debug:
+      msg: "{{ irisinstall.stdout }}"

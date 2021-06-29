@@ -1,0 +1,6 @@
+---
+instaserver_file_dir: /epicfiles/nonprdfiles/release/instaserver/
+epic_admin_user: epicadm
+epic_admin_group: epicsys
+iris_bin: /usr/bin/iris
+answerfile_name: iris_variables.txt
