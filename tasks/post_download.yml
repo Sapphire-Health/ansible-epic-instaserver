@@ -2,6 +2,7 @@
   block:
   - name: Extract instaserver
     command: sh {{ item.invocation.module_args.path }} -extract
+    args:
       chdir: "{{ item.invocation.module_args.dest }}"
     #become: yes
     #become_user: "{{ epic_admin_user }}"
