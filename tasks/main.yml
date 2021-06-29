@@ -71,8 +71,7 @@
       path: "{{ iris_bin }}"
     register: irisbin
   - name: Install Iris ()
-    ansible.builtin.command:
-      cmd: sh {{ instaserver_dir }}.sh --component BuildCustom --variable_file {{ instaserver_file_dir }}{{ answerfile_name }}
+    command: sh {{ instaserver_dir }}.sh --component BuildCustom --variable_file {{ instaserver_file_dir }}{{ answerfile_name }}
       chdir: "{{ instaserver_file_dir }}"
     when: irisbin.stat.exists != True
     register: irisinstall
