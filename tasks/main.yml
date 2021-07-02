@@ -74,11 +74,21 @@
       path: "{{ iris_bin }}"
     register: irisbin
   - name: Install Iris ()
-    command: sh {{ instaserver_dir }}.sh --component BuildCustom --variable_file {{ instaserver_extract_dir }}{{ answerfile_name }}
+    command: sh {{ instaserver_file }} --component BuildCustom --variable_file {{ instaserver_extract_dir }}{{ answerfile_name }}
     args:
       chdir: "{{ instaserver_extract_dir }}"
     when: irisbin.stat.exists != True
     register: irisinstall
+  - stat: path="/epic/bin/start_epic_all.ksh"
+    register: start_script
+  - name: Move epic start script into bin directory
+    command: "cp {{ instaserver_extract_dir }}{{instaserver_dir}}/other/ha-scripts/start_epic_all.ksh /epic/bin/"
+    when: start_script.stat.exists != True
+  - stat: path="/epic/bin/stop_epic_all.ksh"
+    register: stop_script
+  - name: Move epic start script into bin directory
+    command: "cp {{ instaserver_extract_dir }}{{instaserver_dir}}/other/ha-scripts/stop_epic_all.ksh /epic/bin/"
+    when: stop_script.stat.exists != True
   - name: Return stdout from iris install
     debug:
       msg: "{{ irisinstall.stdout }}"
