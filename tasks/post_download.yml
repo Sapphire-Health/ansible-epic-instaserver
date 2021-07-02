@@ -1,14 +1,15 @@
 - name: Prep instaserver
   block:
+  - stat:
+      path: "{{ instaserver_extract_dir }}{{ instaserver_dir }}"
+    register: instaserverextract
   - name: Extract instaserver
     command: sh {{ item.invocation.module_args.path }} -extract
     args:
       chdir: "{{ item.invocation.module_args.dest }}"
+    when: instaserverextract.stat.exists == false
     #become: yes
     #become_user: "{{ epic_admin_user }}"
-  - name: Get name of instaserver
-    set_fact:
-      instaserver_dir: "{{ item.invocation.module_args.path.split('.')[0] }}"
   #- name: Set instaserver directory owner
   #  ansible.builtin.file:
   #    path: "{{ instaserver_dir }}"
@@ -21,5 +22,7 @@
   - stat: path="{{ item.invocation.module_args.path }}"
     register: instaserverfile
   - name: Move extracted instaserver contents to instaserver file directory
-    command: "mv {{ instaserver_dir }} {{ instaserver_file_dir }}"
+    command: "mv {{ instaserver_dir }} {{ instaserver_extract_dir }}"
+    args:
+      chdir: "{{ item.invocation.module_args.dest }}"
     when: instaserverfile.stat.exists != True

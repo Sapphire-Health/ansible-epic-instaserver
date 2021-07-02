@@ -12,7 +12,7 @@
       - pcp-system-tools
       - bcc-tools
       disable_gpg_check: true
-      state: present
+      state: latest
   - name: Create directories for all instances in answerfile
     ansible.builtin.file:
       path: "{{ item.Directory }}"
@@ -23,18 +23,24 @@
     loop: "{{ answer_file.Instances }}"
   - name: Create instaserver release directory
     ansible.builtin.file:
-      path: "{{ instaserver_file_dir }}"
+      path: "{{ instaserver_extract_dir }}"
       state: directory
   - name: Download files
     get_url:
       url: "{{ item.value }}"
-      dest: "{{ instaserver_file_dir }}"
+      dest: "{{ instaserver_extract_dir }}"
       #mode: '0555'
     register: files
     loop: "{{ downloads | dict2items }}"
-  - name: Get list of downloads
-    debug:
-      msg: "{{ files.results }}"
+  - name: Get name of instaserver file
+    set_fact:
+      instaserver_file: "{{ downloads.instaserver_url.split('/')[-1] }}"
+  - name: Get name of instaserver directory
+    set_fact:
+      instaserver_dir: "{{ instaserver_file.split('.')[0] }}"
+  #- name: Get list of downloads
+  #  debug:
+  #    msg: "{{ files.results }}"
   - name: Find instaserver download from array of downloads
     include_tasks: post_download.yml
     when: item.item.key == "instaserver_url"
@@ -49,16 +55,13 @@
   - name: Template to build answer_file
     ansible.builtin.template:
       src: answer_file.j2
-      dest: "{{ instaserver_file_dir }}{{ answerfile_name }}"
+      dest: "{{ instaserver_extract_dir }}{{ answerfile_name }}"
       owner: "{{ epic_admin_user }}"
       group: "{{ epic_admin_group }}"
       mode: '0644'
-  - name: Parse dir name
-    set_fact:
-      instaserver_dir: "{{ instaserver_dir.split('/')[-1] }}"
   - name: Get name of Epic config RPM
     find:
-      paths: "{{ instaserver_file_dir }}{{ instaserver_dir }}/other/linuxconfig"
+      paths: "{{ instaserver_extract_dir }}{{ instaserver_dir }}/other/linuxconfig"
       patterns: 'epic-config*.rpm'
     register: rpms
   - name: Install epic-config rpm
@@ -71,11 +74,17 @@
       path: "{{ iris_bin }}"
     register: irisbin
   - name: Install Iris ()
-    command: sh {{ instaserver_dir }}.sh --component BuildCustom --variable_file {{ instaserver_file_dir }}{{ answerfile_name }}
+    command: sh {{ instaserver_dir }}.sh --component BuildCustom --variable_file {{ instaserver_extract_dir }}{{ answerfile_name }}
     args:
-      chdir: "{{ instaserver_file_dir }}"
+      chdir: "{{ instaserver_extract_dir }}"
     when: irisbin.stat.exists != True
     register: irisinstall
   - name: Return stdout from iris install
     debug:
       msg: "{{ irisinstall.stdout }}"
+    when: irisinstall.changed
+  - name: Start epic service
+    service:
+      name: epic
+      state: started
+      enabled: yes
