@@ -36,28 +36,28 @@
           path: /etc/sssd/sssd.conf
           regexp: '^use_fully_qualified_names = '
           line: use_fully_qualified_names = False
-          insertafter: '^access_provider'
+          insertafter: '^\[domain/(.*?)\]$'
         notify: restart auth services
       - name: Configure override_homedir in sssd.conf
         ansible.builtin.lineinfile:
           path: /etc/sssd/sssd.conf
           regexp: '^override_homedir = '
           line: override_homedir = /home/%u
-          insertafter: '^access_provider'
+          insertafter: '^\[domain/(.*?)\]$'
         notify: restart auth services
       - name: Configure ad_gpo_ignore_unreadable in sssd.conf
         ansible.builtin.lineinfile:
           path: /etc/sssd/sssd.conf
           regexp: '^ad_gpo_ignore_unreadable = '
           line: ad_gpo_ignore_unreadable = True
-          insertafter: '^access_provider'
+          insertafter: '^\[domain/(.*?)\]$'
         notify: restart auth services
       - name: Configure udp_preference_limit in /etc/krb5.conf
         ansible.builtin.lineinfile:
           path: /etc/krb5.conf
           regexp: '^udp_preference_limit = '
           line: "udp_preference_limit = 1"
-          insertafter: '^\[libdefaults\]'
+          insertafter: '^\[libdefaults\]$'
         notify: restart auth services
       - name: Start and enable the realmd service
         service:
