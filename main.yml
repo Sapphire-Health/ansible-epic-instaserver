@@ -52,6 +52,13 @@
           line: ad_gpo_ignore_unreadable = True
           insertafter: '^\[domain/(.*?)\]$'
         notify: restart auth services
+      - name: Configure ad_gpo_access_control in sssd.conf
+        ansible.builtin.lineinfile:
+          path: /etc/sssd/sssd.conf
+          regexp: '^ad_gpo_access_control = '
+          line: ad_gpo_access_control = disabled
+          insertafter: '^\[domain/(.*?)\]$'
+        notify: restart auth services
       - name: Configure udp_preference_limit in /etc/krb5.conf
         ansible.builtin.lineinfile:
           path: /etc/krb5.conf
