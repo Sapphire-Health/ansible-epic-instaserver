@@ -16,7 +16,7 @@
           name: realmd, oddjob-mkhomedir, sssd-krb5, sssd-ad, krb5-workstation, oddjob, oddjob-mkhomedir, sssd, samba-common-tools
           state: present
       - name: Check if server is already a domain member
-        shell: "realm list | grep -i -q {{ ADDomain }} && echo -n JOINED"
+        shell: "realm list | grep -i -q {{ ADDomain }} && echo -n JOINED || echo -n NOTJOINED"
         register: domain_check
         changed_when: domain_check.stdout != 'JOINED'
       - name: Install pexpect using pip
