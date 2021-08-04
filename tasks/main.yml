@@ -100,7 +100,8 @@
     loop: "{{ answer_file.Instances }}"
   - name: Return stdout from checkperm
     debug:
-      msg: "{{ checkperm.stdout }}"
+      msg: "{{ item.stdout }}"
+    loop: "{{ checkperm.results }}"
     when: irisinstall.changed
   - name: Start epic service
     service:
