@@ -93,7 +93,7 @@
     debug:
       msg: "{{ irisinstall.stdout }}"
     when: irisinstall.changed
-  - name: Create directories for all instances in answerfile
+  - name: Fix permissions
     command: "{{ item.Directory }}/bin/checkperm --yes_fix"
     register: checkperm
     when: irisinstall.changed
