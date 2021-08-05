@@ -21,14 +21,16 @@
       group: "{{ epic_admin_group }}"
       state: directory
     loop: "{{ answer_file.Instances }}"
-  - name: Create instaserver release directory
-    ansible.builtin.file:
-      path: "{{ instaserver_extract_dir }}"
-      state: directory
+  #- name: Create instaserver release directory
+  #  ansible.builtin.file:
+  #    path: "{{ instaserver_extract_dir }}"
+  #    state: directory
+  - name: Create epicfiles directories
+    include_tasks: create_directories.yml
   - name: Download files
     get_url:
       url: "{{ item.value }}"
-      dest: "{{ instaserver_extract_dir }}"
+      dest: "{{ instaserver_extract_dir.path }}"
       #mode: '0555'
     register: files
     loop: "{{ downloads | dict2items }}"
@@ -55,13 +57,13 @@
   - name: Template to build answer_file
     ansible.builtin.template:
       src: answer_file.j2
-      dest: "{{ instaserver_extract_dir }}{{ answerfile_name }}"
+      dest: "{{ instaserver_extract_dir.path }}{{ answerfile_name }}"
       owner: "{{ epic_admin_user }}"
       group: "{{ epic_admin_group }}"
       mode: '0644'
   - name: Get name of Epic config RPM
     find:
-      paths: "{{ instaserver_extract_dir }}{{ instaserver_dir }}/other/linuxconfig"
+      paths: "{{ instaserver_extract_dir.path }}{{ instaserver_dir }}/other/linuxconfig"
       patterns: 'epic-config*.rpm'
     register: rpms
   - name: Install epic-config rpm
@@ -70,24 +72,46 @@
       state: present
       disable_gpg_check: yes
     loop: "{{ rpms.files }}"
+  - name: Install multiple dependencies
+    yum:
+      name:
+      - tuned
+      state: latest
+  - name: Configure hugepages in tuned config
+    lineinfile:
+      path: /etc/tuned/epic/tuned.conf
+      regexp: '^#vm.nr_hugepages =|^vm.nr_hugepages ='
+      line: vm.nr_hugepages = {{ tuned['vm.nr_hugepages'] }}
+  - name: Start and enable tuned service
+    service:
+      name: tuned
+      state: started
+      enabled: yes
+  - name: Check current hugepages config to determine if reboot is required
+    command: sysctl vm.nr_hugepages
+    register: hugepages
+  - name: Configure hugepages live if not correct
+    command: "sysctl -w vm.nr_hugepages={{ tuned['vm.nr_hugepages'] }}"
+    register: hugepages
+    when: hugepages.stdout.replace('vm.nr_hugepages = ', '') != tuned['vm.nr_hugepages']
   - stat:
       path: "{{ iris_bin }}"
     register: irisbin
   - name: Install Iris ()
-    command: sh {{ instaserver_file }} --component BuildCustom --variable_file {{ instaserver_extract_dir }}{{ answerfile_name }}
+    command: sh {{ instaserver_file }} --component BuildCustom --variable_file {{ instaserver_extract_dir.path }}{{ answerfile_name }}
     args:
-      chdir: "{{ instaserver_extract_dir }}"
+      chdir: "{{ instaserver_extract_dir.path }}"
     when: irisbin.stat.exists != True
     register: irisinstall
   - stat: path="/epic/bin/start_epic_all.ksh"
     register: start_script
   - name: Move epic start script into bin directory
-    command: "cp {{ instaserver_extract_dir }}{{instaserver_dir}}/other/ha-scripts/start_epic_all.ksh /epic/bin/"
+    command: "cp {{ instaserver_extract_dir.path }}{{instaserver_dir}}/other/ha-scripts/start_epic_all.ksh /epic/bin/"
     when: start_script.stat.exists != True
   - stat: path="/epic/bin/stop_epic_all.ksh"
     register: stop_script
   - name: Move epic start script into bin directory
-    command: "cp {{ instaserver_extract_dir }}{{instaserver_dir}}/other/ha-scripts/stop_epic_all.ksh /epic/bin/"
+    command: "cp {{ instaserver_extract_dir.path }}{{instaserver_dir}}/other/ha-scripts/stop_epic_all.ksh /epic/bin/"
     when: stop_script.stat.exists != True
   - name: Return stdout from iris install
     debug:

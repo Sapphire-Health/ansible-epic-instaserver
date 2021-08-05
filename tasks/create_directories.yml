@@ -1,0 +1,59 @@
+- name: Set variables for prod
+  set_fact:
+    epicfiles_directory: /epicfiles/prdfiles
+    epicfiles_subdirectory: prd
+- name: Set variables for nonprod
+  set_fact:
+    epicfiles_directory: /epicfiles/nonprdfiles
+    epicfiles_subdirectory: nonprd
+  when: answer_file.Instances[0].Type == "NONPROD"
+- name: "Create {{ epicfiles_directory }}/{{ epicfiles_subdirectory }} directory"
+  ansible.builtin.file:
+    path: "{{ epicfiles_directory }}/{{ epicfiles_subdirectory }}"
+    mode: '2775'
+    owner: epicadm
+    group: dmngrp
+    state: directory
+- name: "Create {{ epicfiles_directory }}/comcli directory"
+  ansible.builtin.file:
+    path: "{{ epicfiles_directory }}/comcli"
+    mode: '0777'
+    owner: epicdmn
+    group: epicuser
+    state: directory
+- name: "Create {{ epicfiles_directory }}/release/instaserver/"
+  ansible.builtin.file:
+    path: "{{ epicfiles_directory }}/release/instaserver/"
+    mode: '2775'
+    owner: epicadm
+    group: epicuser
+    state: directory
+  register: instaserver_extract_dir
+- name: "Create {{ epicfiles_directory }}/audit"
+  ansible.builtin.file:
+    path: "{{ epicfiles_directory }}/audit"
+    mode: '2775'
+    owner: epicadm
+    group: dmngrp
+    state: directory
+- name: "Create {{ epicfiles_directory }}/release/{{ epicfiles_subdirectory }}"
+  ansible.builtin.file:
+    path: "{{ epicfiles_directory }}/release/{{ epicfiles_subdirectory }}"
+    mode: '0775'
+    owner: epicadm
+    group: dmngrp
+    state: directory
+- name: "Create {{ epicfiles_directory }}/release/{{ epicfiles_subdirectory }}/archive"
+  ansible.builtin.file:
+    path: "{{ epicfiles_directory }}/release/{{ epicfiles_subdirectory }}/archive"
+    mode: '0775'
+    owner: epicadm
+    group: dmngrp
+    state: directory
+- name: "Create {{ epicfiles_directory }}/altjrn"
+  ansible.builtin.file:
+    path: "{{ epicfiles_directory }}/altjrn"
+    mode: '0775'
+    owner: epicadm
+    group: cachegrp
+    state: directory
