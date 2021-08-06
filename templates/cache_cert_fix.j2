@@ -1,0 +1,13 @@
+#!/bin/bash
+#
+# Usage: cache_cert_fix.sh <instance>
+# Ex:	 cache_cert_fix.sh tst
+
+csession $1 -U %SYS << EOF
+
+w ##class(Security.SSLConfigs).Get("ISC.FeatureTracker.SSL.Config",.props)
+s props("CAFile")=""
+s props("VerifyPeer")=0
+w ##class(Security.SSLConfigs).Modify("ISC.FeatureTracker.SSL.Config",.props)
+h
+EOF

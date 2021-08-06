@@ -1,0 +1,23 @@
+- name: Default to iris script name
+  set_fact:
+    script_name: iris_cert_fix
+- name: Switch to cache script name if IRIS is not found
+  set_fact:
+    script_name: cache_cert_fix
+  when: iris.matched == 0
+- name: Template to build answer_file
+  ansible.builtin.template:
+    src: "{{ script_name }}.j2"
+    dest: "/tmp/{{ script_name }}.sh"
+    owner: root
+    group: root
+    mode: '0755'
+- name: Run script to fix certificate issue
+  shell:
+    cmd: "/tmp/{{ script_name }}.sh {{ item.Name }}"
+  register: certfix
+  loop: "{{ answer_file.Instances }}"
+- name: Return stdout from certfix
+  debug:
+    msg: "{{ item.stdout }}"
+  loop: "{{ certfix.results }}"

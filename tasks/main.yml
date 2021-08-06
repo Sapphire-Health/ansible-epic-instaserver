@@ -43,6 +43,24 @@
   #- name: Get list of downloads
   #  debug:
   #    msg: "{{ files.results }}"
+  - name: Check for IRIS
+    find:
+      paths: "{{ instaserver_extract_dir.path }}"
+      patterns: ['(?i)(.*?)iris(.*?).tar.gz']
+      use_regex: yes
+    register: iris
+  - name: Default to IRIS install
+    set_fact:
+      iris_install: yes
+      iris_bin: /usr/bin/iris
+  - name: Switch to cache install if IRIS is not found
+    set_fact:
+      iris_install: no
+      iris_bin: /usr/bin/cache
+    when: iris.matched == 0
+  - name: get output
+    debug:
+      msg: "{{ iris_install }}"
   - name: Find instaserver download from array of downloads
     include_tasks: post_download.yml
     when: item.item.key == "instaserver_url"
@@ -118,7 +136,8 @@
       msg: "{{ irisinstall.stdout }}"
     when: irisinstall.changed
   - name: Fix permissions
-    command: "{{ item.Directory }}/bin/checkperm --yes_fix"
+    shell:
+      cmd: "{{ item.Directory }}/bin/checkperm --yes_fix"
     register: checkperm
     when: irisinstall.changed
     loop: "{{ answer_file.Instances }}"
@@ -132,3 +151,7 @@
       name: epic
       state: started
       enabled: yes
+    when: irisinstall.changed
+  - name: Run certificate fix tasks
+    include_tasks: certificate_fix.yml
+    when: irisinstall.changed
