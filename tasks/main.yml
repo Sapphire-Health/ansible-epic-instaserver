@@ -105,13 +105,13 @@
       name: tuned
       state: started
       enabled: yes
-  - name: Check current hugepages config to determine if reboot is required
-    command: sysctl vm.nr_hugepages
-    register: hugepages
+  #- name: Check current hugepages config to determine if reboot is required
+  #  command: sysctl vm.nr_hugepages
+  #  register: hugepages
   - name: Configure hugepages live if not correct
-    command: "sysctl -w vm.nr_hugepages={{ tuned['vm.nr_hugepages'] }}"
+    shell: "sysctl vm.nr_hugepages | grep -q {{ tuned['vm.nr_hugepages'] }} && echo -n HPCORRECT || sysctl -w vm.nr_hugepages={{ tuned['vm.nr_hugepages'] }}"
     register: hugepages
-    when: hugepages.stdout.replace('vm.nr_hugepages = ', '') != tuned['vm.nr_hugepages']
+    changed_when: hugepages.stdout != 'HPCORRECT'
   - stat:
       path: "{{ iris_bin }}"
     register: irisbin
@@ -121,6 +121,12 @@
       chdir: "{{ instaserver_extract_dir.path }}"
     when: irisbin.stat.exists != True
     register: irisinstall
+  - name: Ensure we have our own comment added to /etc/services
+    lineinfile:
+      path: /epic/redalert/conf/checkcachelicenses.conf
+      regexp: '^\<LICENSE_TYPE\>MultiServer\<\/LICENSE_TYPE\>'
+      insertbefore: '^\<PERCENT_LICENSES_USED\>'
+      line: '<LICENSE_TYPE>MultiServer</LICENSE_TYPE>'
   - stat: path="/epic/bin/start_epic_all.ksh"
     register: start_script
   - name: Move epic start script into bin directory
