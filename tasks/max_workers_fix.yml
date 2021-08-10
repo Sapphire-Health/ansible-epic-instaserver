@@ -1,0 +1,16 @@
+- name: Max workers script template
+  ansible.builtin.template:
+    src: wqd_fix.j2
+    dest: /tmp/wqd_fix.sh
+    owner: root
+    group: root
+    mode: '0755'
+- name: Run script to fix max active workers
+  shell:
+    cmd: "/tmp/wqd_fix.sh {{ item.Name }}"
+  register: maxworkerfix
+  loop: "{{ answer_file.Instances }}"
+- name: Return stdout from maxworkerfix
+  debug:
+    msg: "{{ item.stdout }}"
+  loop: "{{ maxworkerfix.results }}"

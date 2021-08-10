@@ -5,7 +5,7 @@
   set_fact:
     script_name: cache_cert_fix
   when: iris.matched == 0
-- name: Template to build answer_file
+- name: Certificate fix script template
   ansible.builtin.template:
     src: "{{ script_name }}.j2"
     dest: "/tmp/{{ script_name }}.sh"

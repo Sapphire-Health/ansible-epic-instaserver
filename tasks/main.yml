@@ -161,3 +161,6 @@
   - name: Run certificate fix tasks
     include_tasks: certificate_fix.yml
     when: irisinstall.changed
+  - name: Run max worker fix tasks
+    include_tasks: max_workers_fix.yml
+    #when: irisinstall.changed
