@@ -1,6 +1,6 @@
 #!/usr/bin/ksh
 
-csession $1 -U %SYS << EOF
+irissession $1 -U %SYS << EOF
 s ^%SYS("WQM","MaxActiveWorkers","Default")=20
 s ^%SYS("WQM","MaxActiveWorkers","SQL")=20
 s ^%SYS("WQM","Timeout")=28800
