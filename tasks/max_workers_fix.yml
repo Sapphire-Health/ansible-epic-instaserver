@@ -1,13 +1,20 @@
-- name: Max workers script template
+- name: Default to iris script name
+  set_fact:
+    script_name: iris_wqd_fix
+- name: Switch to cache script name if IRIS is not found
+  set_fact:
+    script_name: cache_wqd_fix
+  when: iris.matched == 0
+- name: Max workers fix script template
   ansible.builtin.template:
-    src: wqd_fix.j2
-    dest: /tmp/wqd_fix.sh
+    src: "{{ script_name }}.j2"
+    dest: "/tmp/{{ script_name }}.sh"
     owner: root
     group: root
     mode: '0755'
-- name: Run script to fix max active workers
+- name: Run script to fix max workers
   shell:
-    cmd: "/tmp/wqd_fix.sh {{ item.Name }}"
+    cmd: "/tmp/{{ script_name }}.sh {{ item.Name }}"
   register: maxworkerfix
   loop: "{{ answer_file.Instances }}"
 - name: Return stdout from maxworkerfix
